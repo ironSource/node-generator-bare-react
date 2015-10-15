@@ -16,6 +16,7 @@ ReactDOM.render((
   </Router>
 ), mountNode)<%} else {%><%- imports(
   { 'react': ['React']
+  , 'react-dom': ['ReactDOM']
   , './components/$paramName': [name] }) %>
 
 <% if (append){%>let mountNode = document.createElement('div')
