@@ -1,6 +1,6 @@
 {
   "name": "generator-bare-react",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Generator for React apps and components",
   "license": "MIT",
   "main": "generators/app/index.js",
