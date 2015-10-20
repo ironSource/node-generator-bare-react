@@ -4,6 +4,9 @@
   "description": "Generator for React apps and components",
   "license": "MIT",
   "main": "generators/app/index.js",
+  "files": [
+    "generators"
+  ],
   "author": {
     "name": "Vincent Weevers",
     "email": "mail@vincentweevers.nl",
