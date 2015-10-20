@@ -2,7 +2,7 @@
 
 **Generator for [React](https://github.com/facebook/react) apps and components.** Does not create a full project, but scaffolds a `lib/components/my-component.js` and `lib/index.js` in ES5 or ES6, optionally including [React Router](https://rackt.github.io/react-router), [React Bootstrap](http://react-bootstrap.github.io/) and [pure render](https://github.com/gaearon/react-pure-render). If a `package.json` exists in the working directory, react and react-dom 0.14 will be installed, as well as the latest react-router, react-bootstrap and react-pure-render. If those modules are already installed, regardless of version, they will be skipped.
 
-[![npm status](http://img.shields.io/npm/v/generator-bare-react.svg?style=flat-square)](https://www.npmjs.org/package/generator-bare-react)  [![Dependency status](https://img.shields.io/david/vweevers/node-generator-bare-react.svg?style=flat-square)](https://david-dm.org/vweevers/node-generator-bare-react)
+[![npm status](http://img.shields.io/npm/v/generator-bare-react.svg?style=flat-square)](https://www.npmjs.org/package/generator-bare-react)  [![Dependency status](https://img.shields.io/david/ironSource/node-generator-bare-react.svg?style=flat-square)](https://david-dm.org/ironSource/node-generator-bare-react)
 
 ## usage
 
