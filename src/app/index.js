@@ -87,6 +87,11 @@ const self = module.exports = class ReactGenerator extends Base {
       this.options[option] = strictString(this.options[option], undefined)
     })
 
+    if (this.options.style !== undefined) {
+      this.log.info('Warning: the "style" option is deprecated '+
+                    'and will be removed in bare-react 2.0.')
+    }
+
     // TODO: parse and implement
     this.option('children', { desc: 'Reserved for future use' })
 
