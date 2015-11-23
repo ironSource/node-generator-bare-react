@@ -19,16 +19,26 @@ Specify an option like `--name MyComponent` to skip that question. For more deta
 --type          # app or component
 --dest          # Destination directory
 --name          # Component or app name
---style         # es6, es6-functional or es5
---router        # Enable or disable (--no-router) and skip question
---pureRender    # Enable or disable pureRender
---bootstrap     # Enable or disable bootstrap
+--style         # Deprecated: es6, es6-functional or es5
+--esnext        # Use ES6+ features
+--modules       # Module format, case insensitive: ES6 or CommonJS
+--router        # Enable React Router
+--pure-render   # Enable pure render
+--bootstrap     # Enable React Bootstrap
 --enable        # Enable multiple flags ("a,b")
 --disable       # Disable multiple flags
 --append        # For apps: append a mountNode to body prior to rendering
 --help  -h      # Print the generator's options and usage
 --skip-cache    # Do not remember prompt answers
 --skip-install  # Do not automatically install dependencies
+```
+
+Examples:
+
+```
+yo bare-react --no-esnext --type app --name Dashboard --dest lib
+yo bare-react --router --pure-render --no-bootstrap
+yo bare-react --esnext --modules CommonJS
 ```
 
 ## install

@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "after": "~0.8.1",
+    "camel-case": "~1.2.0",
     "chalk": "~1.1.1",
     "configstore": "~1.2.1",
     "latest-version": "~1.0.1",

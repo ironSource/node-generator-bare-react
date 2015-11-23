@@ -1,15 +1,16 @@
 'use strict';
 
-var path = require('path')
-  , ConfigStore = require('configstore')
-  , after = require('after')
-  , latest = require('latest-version')
-  , paramCase = require('param-case')
-  , pascalCase = require('pascal-case')
-  , colors = require('chalk')
+const path = require('path')
+    , ConfigStore = require('configstore')
+    , after = require('after')
+    , latest = require('latest-version')
+    , paramCase = require('param-case')
+    , pascalCase = require('pascal-case')
+    , camelCase = require('camel-case')
+    , colors = require('chalk')
 
-var { name: moduleName, bugs } = require('../../package.json')
-var { Base } = require('yeoman-generator')
+const { name: moduleName, bugs } = require('../../package.json')
+    , { Base } = require('yeoman-generator')
 
 function paramCasePath(path) {
   return path.split(/[\/\\]+/).map(paramCase).filter(k=>k).join('/')
@@ -46,22 +47,32 @@ function strictString(value, notSet) {
   return value === '' ? notSet : value
 }
 
+function validateBoolean(b) {
+  return typeof b === 'boolean' || 'Must be a boolean'
+}
+
 const STYLES = {
   'es6': 'import React from \'react\'; class X extends Component',
-  'es6-functional': 'var React = require(\'react\'); class X extends Component',
+  'es6-functional': 'const React = require(\'react\'); class X extends Component',
   'es5': 'var React = require(\'react\'); React.createClass(..)'
 }
 
 const TYPES = [ 'app', 'component', 'higher-order-component' ]
 const FLAGS = [ 'router', 'pureRender', 'bootstrap' ]
-const REMEMBER = [ 'dest', 'style' ].concat(FLAGS)
+const REMEMBER = [ 'dest', 'esnext', 'modules' ].concat(FLAGS)
 
 const STRING_OPTIONS = {
   type: listChoices(TYPES),
   dest: 'Destination directory',
   name: 'Component or app name',
-  style: listChoices(Object.keys(STYLES))
+  style: 'Deprecated: ' + listChoices(Object.keys(STYLES))
 }
+
+const MODULE_FORMATS =
+  { commonjs: { name: 'CommonJS'
+              , snippet: `const assign = require('object-assign')` }
+  , es6:      { name: 'ES6 modules'
+              , snippet: `import assign from 'object-assign'` }}
 
 const self = module.exports = class ReactGenerator extends Base {
   static getLongtermMemory() {
@@ -78,6 +89,14 @@ const self = module.exports = class ReactGenerator extends Base {
     this.longterm = self.getLongtermMemory()
     this.shortterm = self.getShorttermMemory()
 
+    this.desc(
+       'Generator for React apps and components. Skip questions '
+     + 'by specifying options.\n\nExamples:'
+     + '\n  yo bare-react --no-esnext --type app --name Dashboard --dest lib'
+     + '\n  yo bare-react --router --pure-render --no-bootstrap'
+     + '\n  yo bare-react --esnext --modules CommonJS'
+    )
+
     Object.keys(STRING_OPTIONS).forEach(option => {
       this.option(option, {
         type: 'String',
@@ -87,21 +106,37 @@ const self = module.exports = class ReactGenerator extends Base {
       this.options[option] = strictString(this.options[option], undefined)
     })
 
-    if (this.options.style !== undefined) {
-      this.log.info('Warning: the "style" option is deprecated '+
-                    'and will be removed in bare-react 2.0.')
+    // "--esnext" or "--no-esnext" or "--esnext true"
+    this.option('esnext', {
+      type: 'Boolean',
+      desc: `Use ES6+ features`
+    })
+
+    this.options.esnext = looseBoolean(this.options.esnext, undefined)
+
+    // "--modules es6"
+    this.option('modules', {
+      type: 'String',
+      desc: 'Module format, case insensitive: ES6 or CommonJS'
+    })
+
+    let modules
+      = this.options.modules
+      = strictString(this.options.modules, undefined)
+
+    if (this.options.esnext === false) this.options.modules = 'commonjs'
+    else if (modules !== undefined) {
+      this.options.modules = modules.toLowerCase()
     }
 
     // TODO: parse and implement
     this.option('children', { desc: 'Reserved for future use' })
 
     // "--a" or "--no-a" or "--a true"
-    FLAGS.forEach( (option, i) => {
+    FLAGS.forEach(option => {
       this.option(option, {
         type: 'Boolean',
-        desc: i === 0
-          ? `Enable or disable (--no-${option}) and skip question`
-          : `Enable or disable ${option}`
+        desc: `Enable ${option}`
       })
 
       this.options[option] = looseBoolean(this.options[option], undefined)
@@ -125,7 +160,7 @@ const self = module.exports = class ReactGenerator extends Base {
       }
 
       value.forEach(flag => {
-        flag = flag.trim()
+        flag = camelCase(flag)
         if (FLAGS.indexOf(flag) >= 0 && this.options[flag] === undefined) {
           this.options[flag] = option === 'enable'
         }
@@ -138,6 +173,35 @@ const self = module.exports = class ReactGenerator extends Base {
     })
 
     this.options.append = looseBoolean(this.options.append, false)
+
+    if (this.options.style !== undefined) {
+      let style = this.options.style
+        , str = JSON.stringify(style)
+
+      this.log.info('The "style" option has been removed.')
+
+      if (style === 'es6') {
+        this.options.esnext = true
+        this.options.modules = 'es6'
+      } else if (style === 'es6-functional') {
+        this.options.esnext = true
+        this.options.modules = 'commonjs'
+      } else if (style === 'es5') {
+        this.options.esnext = false
+        this.options.modules = 'commonjs'
+      } else {
+        this.log.info('I could not convert the invalid value %s for you.', str)
+        return this.env.error(
+          'Invalid value for option "style". '+
+          'Please specify "esnext" and "modules" instead.'
+        )
+      }
+
+      this.log.info('I\'ve converted the value %s to: ', str)
+
+      let { modules, esnext } = this.options
+      this.log.info({ esnext, modules })
+    }
   }
 
   prompting() {
@@ -153,7 +217,9 @@ const self = module.exports = class ReactGenerator extends Base {
       {
         type: 'list',
         name: 'type',
-        choices: TYPES.map(type => ({ name: type.replace(/-/g, ' '), value: type })),
+        choices: TYPES.map(type => {
+          return { name: type.replace(/-/g, ' '), value: type }
+        }),
         message: 'What do want to create?',
         default: 'app',
         validate: (choice) => { // Used to validate option
@@ -163,42 +229,56 @@ const self = module.exports = class ReactGenerator extends Base {
       },
       {
         name: 'name',
-        message: currentAnswers((answers) => {
-          if (answers.type === 'app') return 'What would you like to name your app?'
-          else return 'What would you like to name your component?'
+        message: currentAnswers(answers => {
+          return `What would you like to name your ${answers.type}?`
         }),
-        default: currentAnswers((answers) => answers.type === 'app' ? 'App' : ''),
-        validate: (val) => pascalCase(val.trim()).length ? true : 'You have to provide a name',
-        filter: (val) => pascalCase(val.trim())
+        default: currentAnswers(answers => pascalCase(answers.type)),
+        validate: (val) => {
+          return pascalCase(val).length ? true : 'You have to provide a name'
+        },
+        filter: (val) => pascalCase(val)
       },
       {
         name: 'dest',
-        message: currentAnswers((answers) => {
+        message: currentAnswers(answers => {
           let { type, name } = answers
-          let component = colors.yellow(`components/${name}.js`)
+          let component = colors.yellow(`components/${paramCase(name)}.js`)
+            , what = component
 
           if (type === 'app') {
             let renderer = colors.yellow(`${paramCase(name)}.js`)
-            return `Where do you want to place renderer ${renderer} and ${component}?`
-          } else {
-            return `Where do you want to place ${component}?`
+            what = `renderer ${renderer} and ${component}?`
           }
+
+          return `Where do you want to place ${what}?`
         }),
         default: this.longterm.get('dest') || 'lib',
-        validate: (val) => paramCasePath(val).length ? true : 'You have to provide a destination',
+        validate: (val) => {
+          return paramCasePath(val).length
+            ? true
+            : 'You have to provide a destination'
+        },
         filter: paramCasePath
       },
       {
+        type: 'confirm',
+        name: 'esnext',
+        message: 'Do you prefer ES6 over ES5?',
+        default: bool(this.longterm.get('esnext'), true),
+        validate: validateBoolean
+      },
+      {
         type: 'list',
-        name: 'style',
-        message: 'Which style do you prefer?',
-        default: this.longterm.get('style') || 'es6',
-        choices: Object.keys(STYLES).map(name => {
-          let snippet = colors.gray(STYLES[name])
-          return { name: `${name}  ${snippet}`, value: name }
+        name: 'modules',
+        when: (answers) => answers.esnext,
+        message: 'Which module format do you prefer?',
+        default: this.longterm.get('modules') || 'commonjs',
+        choices: Object.keys(MODULE_FORMATS).map(key => {
+          let { name, snippet } = MODULE_FORMATS[key]
+          return { name: `${name}  ${colors.gray(snippet)}`, value: key }
         }),
         validate: (choice) => { // Used to validate option
-          let choices = Object.keys(STYLES)
+          let choices = Object.keys(MODULE_FORMATS)
           if (choices.indexOf(choice) >= 0) return true
           return 'Must be one of ' + JSON.stringify(choices)
         }
@@ -208,21 +288,21 @@ const self = module.exports = class ReactGenerator extends Base {
         name: 'pureRender',
         message: 'Do you wish to use pure render components?',
         default: bool(this.longterm.get('pureRender'), true),
-        validate: (b) => typeof b === 'boolean' || 'Must be a boolean'
+        validate: validateBoolean
       },
       {
         type: 'confirm',
         name: 'router',
         message: 'Do you need React Router?',
         default: bool(this.longterm.get('router'), true),
-        validate: (b) => typeof b === 'boolean' || 'Must be a boolean'
+        validate: validateBoolean
       },
       {
         type: 'confirm',
         name: 'bootstrap',
         message: 'Would you like some React Bootstrap?',
         default: bool(this.longterm.get('bootstrap'), true),
-        validate: (b) => typeof b === 'boolean' || 'Must be a boolean'
+        validate: validateBoolean
       }
     ]
 
@@ -278,7 +358,7 @@ const self = module.exports = class ReactGenerator extends Base {
   _assertIsValidOption(name, value, validate) {
     let valid = validate(value)
     if (valid !== true) {
-      throw new Error(`Invalid value for option "${name}": ${valid}`)
+      this.env.error(`Invalid value for option "${name}": ${valid}`)
     }
   }
 

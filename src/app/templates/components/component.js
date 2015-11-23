@@ -5,7 +5,7 @@
   , 'react-bootstrap': bootstrap ? [false, ['Panel']] : false }) %>
 
 <% if (style === 'es6') { %>const { string } = React.PropTypes<% }
-   else if (style === 'es6-functional') { %>var { string } = React.PropTypes<% }
+   else if (style === 'es6-functional') { %>const { string } = React.PropTypes<% }
    else { %>var string = React.PropTypes.string <% } %>
 
 <% if (style === 'es5') { %>module.exports = React.createClass({
