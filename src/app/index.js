@@ -36,6 +36,16 @@ function looseBoolean(value, notSet) {
   }
 }
 
+// Don't allow empty strings, and take
+// the first of "--name a --name b".
+function strictString(value, notSet) {
+  if (Array.isArray(value)) return strictString(value[0], notSet)
+  if (typeof value !== 'string') return notSet
+
+  value = value.trim()
+  return value === '' ? notSet : value
+}
+
 const STYLES = {
   'es6': 'import React from \'react\'; class X extends Component',
   'es6-functional': 'var React = require(\'react\'); class X extends Component',
@@ -64,7 +74,7 @@ const self = module.exports = class ReactGenerator extends Base {
 
   constructor(args, options, config) {
     super(args, options, config)
-    
+
     this.longterm = self.getLongtermMemory()
     this.shortterm = self.getShorttermMemory()
 
@@ -74,12 +84,7 @@ const self = module.exports = class ReactGenerator extends Base {
         desc: STRING_OPTIONS[option]
       })
 
-      let value = this.options[option]
-
-      if (Array.isArray(value)) value = this.options[option] = value[0]
-      if (typeof value !== 'string' || value.trim() === '') {
-        this.options[option] = undefined
-      }
+      this.options[option] = strictString(this.options[option], undefined)
     })
 
     // TODO: parse and implement
@@ -92,7 +97,7 @@ const self = module.exports = class ReactGenerator extends Base {
         desc: i === 0
           ? `Enable or disable (--no-${option}) and skip question`
           : `Enable or disable ${option}`
-      })      
+      })
 
       this.options[option] = looseBoolean(this.options[option], undefined)
     })
@@ -104,9 +109,9 @@ const self = module.exports = class ReactGenerator extends Base {
       this.option(option, {
         desc: `${pascalCase(option)} multiple flags${example}`
       })
-      
+
       let value = this.options[option]
-      
+
       if (typeof value === 'string') {
         value = this.options[option] = value.split(/[ ,;\/|]+/)
       } else if (!Array.isArray(value)) {
@@ -166,7 +171,7 @@ const self = module.exports = class ReactGenerator extends Base {
         message: currentAnswers((answers) => {
           let { type, name } = answers
           let component = colors.yellow(`components/${name}.js`)
-          
+
           if (type === 'app') {
             let renderer = colors.yellow(`${paramCase(name)}.js`)
             return `Where do you want to place renderer ${renderer} and ${component}?`
@@ -222,7 +227,7 @@ const self = module.exports = class ReactGenerator extends Base {
     let filterNoop = (v) => v
     questions = questions.filter(q => {
       let { name, validate, filter = filterNoop } = q
-      
+
       let remembered = this.shortterm[name]
         , option = this.options[name]
 
@@ -309,7 +314,7 @@ const self = module.exports = class ReactGenerator extends Base {
 
   _saveDependencies(deps, opts, done) {
     if (typeof opts === 'function') done = opts, opts = {}
-    
+
     let group = opts && opts.dev ? 'devDependencies' : 'dependencies'
 
     if (Array.isArray(deps)) {
@@ -319,7 +324,7 @@ const self = module.exports = class ReactGenerator extends Base {
     }
 
     let pkg = this.fs.readJSON('package.json', false)
-    
+
     if (!pkg) {
       this.log.error(`Cannot install ${group} because package.json is missing`)
       return setImmediate(done)
@@ -396,7 +401,7 @@ class Context {
             let imp = '{ ' + rest.join(', ') + ' }'
             let mod = main ? main : `require('${resolved}')`
             multiple.push(`${imp} = ${mod}`)
-          }          
+          }
         }
       }
     })
