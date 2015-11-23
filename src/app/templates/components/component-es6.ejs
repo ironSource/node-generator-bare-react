@@ -1,0 +1,47 @@
+<% if (modules === 'es6') { -%>
+import React from 'react'
+<% if (pureRender) { -%>
+import Component from 'react-pure-render/component'
+<% } -%>
+<% if (bootstrap) { -%>
+import { Panel } from 'react-bootstrap'
+<% } -%>
+
+const { string } = React.PropTypes
+<% } else { -%>
+const React = require('react')
+<% if (pureRender) { -%>
+    , Component = require('react-pure-render/component')
+<% } -%>
+
+<% if (bootstrap) { -%>
+const { Panel } = require('react-bootstrap')
+<% } -%>
+const { string } = React.PropTypes
+<% } -%>
+
+class <%= name %> extends <%= pureRender ? 'Component' : 'React.Component' %> {
+  static defaultProps = { title: 'I am <%= name %>' }
+  static propTypes = {
+    title: string
+  }
+
+  render() {
+    const { children, title } = this.props
+
+    <% if (bootstrap) {%>return <Panel header={title}>
+      <p>Panel content</p>
+      { children }
+    </Panel><%} else {%>return <div>
+      <h2>{ title }</h2>
+      <p>Panel content</p>
+      { children }
+    </div><%}%>
+  }
+}
+
+<% if (modules === 'es6') { -%>
+export default <%= name %>
+<% } else { -%>
+module.exports = <%= name %>
+<% } -%>

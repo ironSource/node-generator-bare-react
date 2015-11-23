@@ -8,10 +8,7 @@ gulp.task('clean', (done) => {
 })
 
 gulp.task('build:generator', () => {
-  const condition = (vinyl) => {
-    const file = vinyl.relative
-    return file.slice(-3) === '.js' && file.indexOf('templates') < 0
-  }
+  const condition = (vinyl) => vinyl.relative.slice(-3) === '.js'
 
   return gulp.src('src/**/*')
     .pipe(gulpif(condition, babel()))

@@ -1,0 +1,17 @@
+<% if (esnext && modules === 'es6') { -%>
+import React from 'react'
+import ReactDOM from react-dom
+import <%= name %> from './components/<%= paramName %>'
+<%} else if (esnext) { -%>
+const React = require('react')
+    , ReactDOM = require('react-dom')
+    , <%= name %> = require('./components/<%= paramName %>')
+<%} else { -%>
+var React = require('react')
+  , ReactDOM = require('react-dom')
+  , <%= name %> = require('./components/<%= paramName %>')
+<%} -%>
+
+<%- include('mountnode') -%>
+
+ReactDOM.render(<<%= name %> />, mountNode)

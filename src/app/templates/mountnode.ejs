@@ -1,0 +1,6 @@
+<% if (append){ -%>
+<%- esnext ? 'const' : 'var' %> mountNode = document.createElement('div')
+document.body.appendChild(mountNode)
+<%} else { -%>
+<%- esnext ? 'const' : 'var' %> mountNode = document.getElementById('container')
+<%} -%>

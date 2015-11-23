@@ -220,7 +220,7 @@ const self = module.exports = class ReactGenerator extends Base {
         choices: TYPES.map(type => {
           return { name: type.replace(/-/g, ' '), value: type }
         }),
-        message: 'What do want to create?',
+        message: 'What do you want to create?',
         default: 'app',
         validate: (choice) => { // Used to validate option
           if (TYPES.indexOf(choice) >= 0) return true
@@ -247,7 +247,7 @@ const self = module.exports = class ReactGenerator extends Base {
 
           if (type === 'app') {
             let renderer = colors.yellow(`${paramCase(name)}.js`)
-            what = `renderer ${renderer} and ${component}?`
+            what = `renderer ${renderer} and ${component}`
           }
 
           return `Where do you want to place ${what}?`
@@ -350,7 +350,8 @@ const self = module.exports = class ReactGenerator extends Base {
       })
 
       answers.append = append
-      this.ctx = new Context(answers)
+      this.ctx = answers
+
       done()
     })
   }
@@ -368,9 +369,10 @@ const self = module.exports = class ReactGenerator extends Base {
 
   writing() {
     let { ctx } = this
-    let { dest, type, name } = ctx
+      , { dest, type, name, esnext, router, pureRender, bootstrap } = ctx
 
     let paramName = ctx.paramName = paramCase(name)
+      , suffix = esnext ? 'es6' : 'es5'
 
     let copy = (tpl, path) => {
       this.fs.copyTpl
@@ -380,19 +382,19 @@ const self = module.exports = class ReactGenerator extends Base {
     }
 
     if (type === 'app') {
-      copy('app-render.js', 'index.js')
-      copy('components/app.js', `components/${paramName}.js`)
+      copy(router ? 'render-router.ejs' : 'render.ejs', 'index.js')
+      copy(`components/component-${suffix}.ejs`, `components/${paramName}.js`)
     } else if (type === 'component') {
-      copy('components/component.js', `components/${paramName}.js`)
+      copy(`components/component-${suffix}.ejs`, `components/${paramName}.js`)
     } else if (type === 'higher-order-component') {
       this.log.info('Not yet implemented: higher order component')
     }
 
     let deps = { 'react': '~0.14.0', 'react-dom': '~0.14.0' }
 
-    if (ctx.router) deps['react-router'] = null // use latest
-    if (ctx.pureRender) deps['react-pure-render'] = null
-    if (ctx.bootstrap) deps['react-bootstrap'] = null
+    if (router) deps['react-router'] = null // use latest
+    if (pureRender) deps['react-pure-render'] = null
+    if (bootstrap) deps['react-bootstrap'] = null
 
     this._saveDependencies(deps, this.async())
   }
@@ -448,53 +450,5 @@ const self = module.exports = class ReactGenerator extends Base {
         next()
       })
     })
-  }
-}
-
-class Context {
-  constructor(props) {
-    Object.keys(props).forEach(k => { this[k] = props[k] })
-  }
-
-  imports(modules) {
-    let single = [], multiple = []
-
-    Object.keys(modules).forEach(module => {
-      if (modules[module] === false) return
-
-      let imports = modules[module]
-        , main = imports[0] || false
-        , rest = Array.isArray(imports[1]) && imports[1][0] ? imports[1] : false
-        , resolved = module.replace(/\$paramName/g, this.paramName) // tmp hack
-
-      if (main === false && rest === false) return
-
-      if (this.style === 'es6') {
-        // [A, [B, C]] => import A, { B, C }
-        let imp = [main, rest ? '{ ' + rest.join(', ') + ' }' : '' ].filter(k=>k).join(', ')
-        single.push(`import ${imp} from '${resolved}'`)
-      } else {
-        if (main || this.style === 'es5') {
-          main = main || pascalCase(resolved.split(/\.?[\/\\]+/)[0])
-          single.push(`${main} = require('${resolved}')`)
-        }
-
-        if (rest) {
-          if (this.style === 'es5') {
-            rest.forEach(imp => single.push(`${imp} = ${main}.${imp}`))
-          } else {
-            let imp = '{ ' + rest.join(', ') + ' }'
-            let mod = main ? main : `require('${resolved}')`
-            multiple.push(`${imp} = ${mod}`)
-          }
-        }
-      }
-    })
-
-    if (this.style === 'es6') return single.join('\n')
-
-    let group = (a) => a.length ? 'var ' + a.join('\n  , ') : ''
-    if (single.length <= 1) return [group(single), group(multiple)].filter(k=>k).join('\n')
-    return [group(single), group(multiple)].filter(k=>k).join('\n\n')
   }
 }

@@ -1,0 +1,32 @@
+var React = require('react')
+  , PropTypes = React.PropTypes
+<% if (pureRender) { -%>
+  , PureRender = require('react-pure-render/mixin')
+<% } -%>
+<% if (bootstrap) { -%>
+  , Panel = require('react-bootstrap').Panel
+<% } -%>
+
+module.exports = React.createClass({
+  <% if (pureRender) { -%>mixins: [PureRender],<% } %>
+  displayName: '<%= name %>',
+
+  propTypes: {
+    title: PropTypes.string
+  },
+
+  getDefaultProps: function() {
+    return { title: 'I am <%= name %>' }
+  },
+
+  render: function() {
+    <% if (bootstrap) { %>return <Panel header={this.props.title}>
+      <p>Panel content</p>
+      { this.props.children }
+    </Panel><%} else {%>return <div>
+      <h2>{ title }</h2>
+      <p>Panel content</p>
+      { this.props.children }
+    </div><%}%>
+  }
+})

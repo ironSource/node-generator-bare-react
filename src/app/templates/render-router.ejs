@@ -1,0 +1,30 @@
+<% if (esnext && modules === 'es6') { -%>
+import React from 'react'
+import ReactDOM from react-dom
+import <%= name %> from './components/<%= paramName %>'
+import { Router, Route } from 'react-router'
+<%} else if (esnext) { -%>
+const React = require('react')
+    , ReactDOM = require('react-dom')
+    , <%= name %> = require('./components/<%= paramName %>')
+
+const { Router, Route } = require('react-router')
+<%} else { -%>
+var React = require('react')
+  , ReactDOM = require('react-dom')
+  , ReactRouter = require('react-router')
+  , <%= name %> = require('./components/<%= paramName %>')
+
+var Router = ReactRouter.Router
+  , Route = ReactRouter.Route
+<%} -%>
+
+<%- include('mountnode') -%>
+
+ReactDOM.render((
+  <Router>
+    <Route path="/" component={<%= name %>}>
+
+    </Route>
+  </Router>
+), mountNode)
