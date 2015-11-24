@@ -5,6 +5,12 @@ const { resolve } = require('path')
 const CWD = process.cwd()
     , noop = () => {}
     , unhandled = (err) => { if (err) throw err }
+    , methods = [ 'withOptions'
+                , 'withPrompts'
+                , 'withArguments'
+                , 'withLocalConfig'
+                , 'withGenerators'
+                , 'on' ]
 
 module.exports = function runner(opts) {
   if (typeof opts === 'string') opts = { root: opts }
@@ -39,6 +45,7 @@ module.exports = function runner(opts) {
       const ctx = helpers.run(path)
           , end = (err) => { ctx._run = noop, next(), done(err, ctx) }
 
+      // Shorthands
       if (options) ctx.withOptions(options)
       if (prompts) ctx.withPrompts(prompts)
       if (args) ctx.withArguments(args)
@@ -87,10 +94,13 @@ module.exports = function runner(opts) {
       return proxy
     }
 
-    proxy.on = (event, listener) => {
-      init.push(ctx => ctx.on(event, listener))
-      return proxy
-    }
+    // Forward the rest as-is
+    methods.forEach(method => {
+      proxy[method] = (...args) => {
+        init.push(ctx => ctx[method].apply(ctx, args))
+        return proxy
+      }
+    })
 
     return proxy
   }

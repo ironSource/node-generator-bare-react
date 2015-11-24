@@ -15,29 +15,6 @@ function longtermStub(def = {}) {
   }
 }
 
-test('defaults', (t) => {
-  t.plan(2)
-
-  run({ options: { skipCache: true, shortterm: false }}, (err, ctx) => {
-    t.notOk(err)
-
-    const expected = {
-      type: 'app',
-      name: 'App',
-      dest: 'lib',
-      modules: 'commonjs',
-      pureRender: true,
-      bootstrap: false,
-      router: true,
-      esnext: true,
-      append: false,
-      paramName: 'app'
-    }
-
-    t.deepEqual(ctx.generator.ctx, expected)
-  })
-})
-
 test('longterm', (t) => {
   t.plan(5)
 
@@ -112,21 +89,5 @@ test('shortterm', (t) => {
         t.equal(ctx.generator.ctx.pureRender, false)
       })
     })
-  })
-})
-
-test('saves dependencies', (t) => {
-  t.plan(2)
-
-  run({ options: { force: true, skipCache: true, shortterm: false } }, (err) => {
-    t.notOk(err)
-
-    let expected = ['react', 'react-dom', 'react-pure-render', 'react-router']
-      , pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
-      , actual = Object.keys(pkg.dependencies)
-
-    t.deepEqual(actual.sort(), expected.sort())
-  }).inTmpDir((dir, done) => {
-    fs.writeFile(join(dir, 'package.json'), '{}', done)
   })
 })
