@@ -8,8 +8,9 @@ const path = require('path')
     , pascalCase = require('pascal-case')
     , camelCase = require('camel-case')
     , colors = require('chalk')
+    , noop = () => {}
 
-const { name: moduleName, bugs } = require('../../package.json')
+const { name: moduleName, version } = require('../../package.json')
     , { Base } = require('yeoman-generator')
 
 function paramCasePath(path) {
@@ -75,19 +76,30 @@ const MODULE_FORMATS =
               , snippet: `import assign from 'object-assign'` }}
 
 const self = module.exports = class ReactGenerator extends Base {
-  static getLongtermMemory() {
-    return self.longterm || (self.longterm = new ConfigStore(moduleName))
+  static getLongtermMemory(options) {
+    if (options.longterm) return options.longterm
+    if (options.skipCache) return { get: noop, set: noop, all: {} }
+
+    if (!self.longterm) {
+      const major = version.split('.')[0]
+      self.longterm = new ConfigStore(`${moduleName}-${major}`)
+    }
+
+    return self.longterm
   }
 
-  static getShorttermMemory() {
+  static getShorttermMemory(options) {
+    if (options.shortterm === false) return Object.create(null)
+    else if (options.shortterm) return options.shortterm
+
     return self.shorttime || (self.shorttime = Object.create(null))
   }
 
   constructor(args, options, config) {
     super(args, options, config)
 
-    this.longterm = self.getLongtermMemory()
-    this.shortterm = self.getShorttermMemory()
+    this.longterm = self.getLongtermMemory(options)
+    this.shortterm = self.getShorttermMemory(options)
 
     this.desc(
        'Generator for React apps and components. Skip questions '
@@ -270,7 +282,7 @@ const self = module.exports = class ReactGenerator extends Base {
       {
         type: 'list',
         name: 'modules',
-        when: (answers) => answers.esnext,
+        when: currentAnswers(answers => answers.esnext),
         message: 'Which module format do you prefer?',
         default: this.longterm.get('modules') || 'commonjs',
         choices: Object.keys(MODULE_FORMATS).map(key => {
@@ -293,6 +305,7 @@ const self = module.exports = class ReactGenerator extends Base {
       {
         type: 'confirm',
         name: 'router',
+        when: currentAnswers(answers => answers.type === 'app'),
         message: 'Do you need React Router?',
         default: bool(this.longterm.get('router'), true),
         validate: validateBoolean
@@ -301,7 +314,7 @@ const self = module.exports = class ReactGenerator extends Base {
         type: 'confirm',
         name: 'bootstrap',
         message: 'Would you like some React Bootstrap?',
-        default: bool(this.longterm.get('bootstrap'), true),
+        default: bool(this.longterm.get('bootstrap'), false),
         validate: validateBoolean
       }
     ]
@@ -410,7 +423,7 @@ const self = module.exports = class ReactGenerator extends Base {
       deps = obj
     }
 
-    let pkg = this.fs.readJSON('package.json', false)
+    let pkg = this.fs.readJSON(this.destinationPath('package.json'), false)
 
     if (!pkg) {
       this.log.error(`Cannot install ${group} because package.json is missing`)
@@ -430,14 +443,16 @@ const self = module.exports = class ReactGenerator extends Base {
       if (err) return done(err)
 
       pkg[group] = output
-      this.fs.writeJSON('package.json', pkg)
+      this.fs.writeJSON(this.destinationPath('package.json'), pkg)
 
       done()
     })
 
     names.forEach(dep => {
       let wished = deps[dep]
-      let { version: installed } = this.fs.readJSON(this.destinationPath(`node_modules/${dep}/package.json`), {})
+        , depPkg = this.destinationPath(`node_modules/${dep}/package.json`)
+
+      let { version: installed } = this.fs.readJSON(depPkg, {})
 
       if (wished || installed) {
         output[dep] = wished || ('~' + installed)
@@ -445,8 +460,13 @@ const self = module.exports = class ReactGenerator extends Base {
       }
 
       latest(dep, (err, version) => {
-        if (err) this.log.error('Could not fetch version of %s, please save manually: %s', dep, err)
-        else output[dep] = '~' + version
+        if (err) {
+          let msg = 'Could not fetch version of %s, please save manually: %s'
+          this.log.error(msg, dep, err)
+        } else {
+          output[dep] = '~' + version
+        }
+
         next()
       })
     })

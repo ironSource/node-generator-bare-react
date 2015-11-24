@@ -3,10 +3,8 @@ const { resolve } = require('path')
 
 // Because Yeoman changes working directory, get it early
 const CWD = process.cwd()
-
-function unhandled(err) {
-  if (err) throw err
-}
+    , noop = () => {}
+    , unhandled = (err) => { if (err) throw err }
 
 module.exports = function runner(opts) {
   if (typeof opts === 'string') opts = { root: opts }
@@ -31,6 +29,7 @@ module.exports = function runner(opts) {
       , { options, prompts, args, config, generators, ...rest } = merged
         , path = resolve(CWD, root, generator)
         , unknown = Object.keys(rest)
+        , init = []
 
     if (unknown.length) {
       throw new Error('Unknown run spec(s): ' + unknown.join(', '))
@@ -38,7 +37,7 @@ module.exports = function runner(opts) {
 
     function start() {
       const ctx = helpers.run(path)
-          , end = (err) => { next(), done(err) }
+          , end = (err) => { ctx._run = noop, next(), done(err, ctx) }
 
       if (options) ctx.withOptions(options)
       if (prompts) ctx.withPrompts(prompts)
@@ -47,7 +46,19 @@ module.exports = function runner(opts) {
       if (generators) ctx.withGenerators(generators)
 
       ctx.on('end', end).on('error', end)
-      if (start.init) start.init(ctx, merged)
+
+      // Add error handling to async(): abort on error
+      const async = ctx.async.bind(ctx)
+
+      ctx.async = () => {
+        let done = async()
+        return (err) => {
+          if (err) end(err)
+          else done()
+        }
+      }
+
+      init.forEach(fn => fn(ctx, merged))
     }
 
     if (!queue.running) {
@@ -57,6 +68,30 @@ module.exports = function runner(opts) {
       queue.push(start)
     }
 
-    return (fn) => { start.init = fn }
+    const proxy = (fn) => ( init.push(fn), proxy )
+
+    // Make inTmpDir and inDir asynchronous by default
+    proxy.inTmpDir = (fn) => {
+      init.push(ctx => ctx.inTmpDir(absolute => {
+        fn(absolute, ctx.async())
+      }))
+
+      return proxy
+    }
+
+    proxy.inDir = (dir, fn) => {
+      init.push(ctx => ctx.inDir(dir, (absolute) => {
+        fn(absolute, ctx.async())
+      }))
+
+      return proxy
+    }
+
+    proxy.on = (event, listener) => {
+      init.push(ctx => ctx.on(event, listener))
+      return proxy
+    }
+
+    return proxy
   }
 }
