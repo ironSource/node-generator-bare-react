@@ -11,6 +11,22 @@ cd my-project
 yo bare-react [options]
 ```
 
+## requirements for ES6
+
+If you're using Babel 5, the following features must be enabled in `.babelrc`.
+
+```json
+{
+  "optional": [
+    "es7.objectRestSpread",
+    "es7.classProperties",
+    "es7.decorators"
+  ]
+}
+```
+
+*Documentation PRs are welcome for Babel 6 or other transpilers and build systems.*
+
 ### options
 
 Specify an option like `--name MyComponent` to skip that question. For more details on these options, run the generator and follow the wizard to get familiar.
