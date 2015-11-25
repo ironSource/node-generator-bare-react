@@ -307,7 +307,10 @@ const self = module.exports = class ReactGenerator extends Base {
         type: 'list',
         name: 'state',
         when: currentAnswers(answers => answers.esnext),
-        message: 'Should the component have state?',
+        message: currentAnswers(answers => {
+          let name = colors.yellow(answers.name)
+          return `Should the ${name} component have state?`
+        }),
         default: 'none',
         choices: Object.keys(STATE_TYPES).map(key => {
           let { name, snippet } = STATE_TYPES[key]
