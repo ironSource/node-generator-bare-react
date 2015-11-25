@@ -66,7 +66,7 @@ const MODULE_FORMATS =
 
 const STATE_TYPES =
   { none:        { name: 'No' }
-  , property:    { name: 'Class property'
+  , 'class':     { name: 'Class property'
                  , snippet: 'class { state = .. }' }
   , constructor: { name: 'Constructor'
                  , snippet: 'constructor(..) { this.state = .. }' }}
