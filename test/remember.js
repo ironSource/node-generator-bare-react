@@ -56,7 +56,8 @@ test('longterm', (t) => {
       router: true,
       esnext: true,
       append: false,
-      paramName: 'beep-bop'
+      paramName: 'beep-bop',
+      state: 'none'
     }
 
     t.deepEqual(ctx.generator.ctx, answers, 'longterm overwrites answers')

@@ -58,6 +58,19 @@ const STYLES = {
   'es5': 'var React = require(\'react\'); React.createClass(..)'
 }
 
+const MODULE_FORMATS =
+  { commonjs: { name: 'CommonJS'
+              , snippet: `const assign = require('object-assign')` }
+  , es6:      { name: 'ES6 modules'
+              , snippet: `import assign from 'object-assign'` }}
+
+const STATE_TYPES =
+  { none:        { name: 'No' }
+  , property:    { name: 'Class property'
+                 , snippet: 'class { state = .. }' }
+  , constructor: { name: 'Constructor'
+                 , snippet: 'constructor(..) { this.state = .. }' }}
+
 const TYPES = [ 'app', 'component', 'higher-order-component' ]
 const FLAGS = [ 'router', 'pureRender', 'bootstrap' ]
 const REMEMBER = [ 'dest', 'esnext', 'modules' ].concat(FLAGS)
@@ -66,14 +79,9 @@ const STRING_OPTIONS = {
   type: listChoices(TYPES),
   dest: 'Destination directory',
   name: 'Component or app name',
+  state: listChoices(Object.keys(STATE_TYPES)),
   style: 'Deprecated: ' + listChoices(Object.keys(STYLES))
 }
-
-const MODULE_FORMATS =
-  { commonjs: { name: 'CommonJS'
-              , snippet: `const assign = require('object-assign')` }
-  , es6:      { name: 'ES6 modules'
-              , snippet: `import assign from 'object-assign'` }}
 
 const self = module.exports = class ReactGenerator extends Base {
   static getLongtermMemory(options) {
@@ -296,9 +304,26 @@ const self = module.exports = class ReactGenerator extends Base {
         }
       },
       {
+        type: 'list',
+        name: 'state',
+        when: currentAnswers(answers => answers.esnext),
+        message: 'Should the component have state?',
+        default: 'none',
+        choices: Object.keys(STATE_TYPES).map(key => {
+          let { name, snippet } = STATE_TYPES[key]
+          let display = snippet ? `${name}  ${colors.gray(snippet)}` : name
+          return { name: display, value: key }
+        }),
+        validate: (choice) => { // Used to validate option
+          let choices = Object.keys(STATE_TYPES)
+          if (choices.indexOf(choice) >= 0) return true
+          return 'Must be one of ' + JSON.stringify(choices)
+        }
+      },
+      {
         type: 'confirm',
         name: 'pureRender',
-        message: 'Do you wish to use pure render components?',
+        message: 'Do you wish to use pure render?',
         default: bool(this.longterm.get('pureRender'), true),
         validate: validateBoolean
       },
@@ -405,6 +430,7 @@ const self = module.exports = class ReactGenerator extends Base {
 
     let deps = { 'react': '~0.14.0', 'react-dom': '~0.14.0' }
 
+    if (esnext) deps['autobind-decorator'] = null
     if (router) deps['react-router'] = null // use latest
     if (pureRender) deps['react-pure-render'] = null
     if (bootstrap) deps['react-bootstrap'] = null

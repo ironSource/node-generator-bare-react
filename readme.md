@@ -22,6 +22,7 @@ Specify an option like `--name MyComponent` to skip that question. For more deta
 --style         # Deprecated: es6, es6-functional or es5
 --esnext        # Use ES6+ features
 --modules       # Module format, case insensitive: ES6 or CommonJS
+--state         # ES6 only: none, property or constructor
 --router        # Enable React Router
 --pure-render   # Enable pure render
 --bootstrap     # Enable React Bootstrap

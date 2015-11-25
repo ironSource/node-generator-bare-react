@@ -1,5 +1,6 @@
 <% if (modules === 'es6') { -%>
 import React from 'react'
+import autobind from 'autobind-decorator'
 <% if (pureRender) { -%>
 import Component from 'react-pure-render/component'
 <% } -%>
@@ -10,6 +11,7 @@ import { Panel } from 'react-bootstrap'
 const { string } = React.PropTypes
 <% } else { -%>
 const React = require('react')
+    , autobind = require('autobind-decorator')
 <% if (pureRender) { -%>
     , Component = require('react-pure-render/component')
 <% } -%>
@@ -21,20 +23,37 @@ const { string } = React.PropTypes
 <% } -%>
 
 class <%= name %> extends <%= pureRender ? 'Component' : 'React.Component' %> {
-  static defaultProps = { title: 'I am <%= name %>' }
+  static defaultProps = {
+    title: 'I am <%= name %>'
+  }
+
   static propTypes = {
     title: string
+  }
+
+  <% if (state === 'property' ) { -%>
+  state = { }
+  <% } else if (state === 'constructor' ) { -%>
+
+  constructor(props, context) {
+    super(props, context)
+    this.state = { }
+  }
+  <% } -%>
+
+  @autobind handleClick() {
+    // ..
   }
 
   render() {
     const { children, title } = this.props
 
-    <% if (bootstrap) {%>return <Panel header={title}>
-      <p>Panel content</p>
+    <% if (bootstrap) {%>return <Panel header={title} onClick={this.handleClick}>
+      <p>Content</p>
       { children }
-    </Panel><%} else {%>return <div>
+    </Panel><%} else {%>return <div onClick={this.handleClick}>
       <h2>{ title }</h2>
-      <p>Panel content</p>
+      <p>Content</p>
       { children }
     </div><%}%>
   }

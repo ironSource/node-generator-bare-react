@@ -21,7 +21,8 @@ test('defaults', (t) => {
       router: true,
       esnext: true,
       append: false,
-      paramName: 'app'
+      paramName: 'app',
+      state: 'none'
     }
 
     t.deepEqual(ctx.generator.ctx, expected)

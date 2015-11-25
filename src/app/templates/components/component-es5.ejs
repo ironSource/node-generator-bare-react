@@ -19,13 +19,21 @@ module.exports = React.createClass({
     return { title: 'I am <%= name %>' }
   },
 
+  getInitialState: function() {
+    return { }
+  },
+
+  handleClick: function() {
+    // ..
+  },
+
   render: function() {
-    <% if (bootstrap) { %>return <Panel header={this.props.title}>
-      <p>Panel content</p>
+    <% if (bootstrap) { %>return <Panel header={this.props.title} onClick={this.handleClick}>
+      <p>Content</p>
       { this.props.children }
-    </Panel><%} else {%>return <div>
+    </Panel><%} else {%>return <div onClick={this.handleClick}>
       <h2>{ title }</h2>
-      <p>Panel content</p>
+      <p>Content</p>
       { this.props.children }
     </div><%}%>
   }
