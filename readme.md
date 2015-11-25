@@ -68,7 +68,7 @@ npm install -g yo generator-bare-react
 
 ## use as subgenerator
 
-Install bare-react locally and call [composeWith](http://yeoman.io/authoring/composability.html) in your generator. Like on the command line, specify options to skip questions. You can call `composeWith` multiple times within a single session to generate multiple components. Some questions (like which code style to use) will then be asked just once.
+Install bare-react locally and call [composeWith](http://yeoman.io/authoring/composability.html) in your generator. Like on the command line, specify options to skip questions. You can call `composeWith` multiple times within a single session to generate multiple components. Some questions (like whether to use ES6) will then be asked just once.
 
 ```js
 // Generates lib/components/popup.js and lib/index.js
@@ -92,6 +92,17 @@ this.composeWith('bare-react'
   , { local: require.resolve('generator-bare-react')
     , link: 'strong' })
 ```
+
+## changelog
+
+### 2.0.0
+
+- Renders into `#container` by default
+- Uses the same template for app and component
+- ES6 modules are opt-in
+- The `style` (es5/es6/es6-functional) option is replaced with `esnext` (boolean) and `modules` (es6/commonjs)
+- ES6 only: one can choose where state gets defined (class property, in the constructor, or not at all)
+- The generated component includes an example event handler, with [autobind-decorator](https://www.npmjs.com/package/autobind-decorator) for ES6.
 
 ## license
 
