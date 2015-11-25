@@ -27,7 +27,7 @@ If you're using Babel 5, the following features must be enabled in `.babelrc`.
 
 *Documentation PRs are welcome for Babel 6 or other transpilers and build systems.*
 
-### options
+## options
 
 Almost all options map directly to questions; if you specify an option then the relevant question(s) will be skipped. Note as well that the generator remembers your answers, so not specifying any options is just as quick. For more details on these options, run the generator and follow the wizard to get familiar.
 
@@ -45,7 +45,7 @@ Almost all options map directly to questions; if you specify an option then the 
 - skipCache: do not remember prompt answers
 - skipInstall: do not automatically install dependencies
 
-### examples
+## examples
 
 ```
 yo bare-react --no-esnext --type app --name Dashboard --dest lib
