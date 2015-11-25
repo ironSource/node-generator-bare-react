@@ -29,33 +29,28 @@ If you're using Babel 5, the following features must be enabled in `.babelrc`.
 
 ### options
 
-Specify an option like `--name MyComponent` to skip that question. For more details on these options, run the generator and follow the wizard to get familiar.
+Almost all options map directly to questions; if you specify an option then the relevant question(s) will be skipped. Note as well that the generator remembers your answers, so not specifying any options is just as quick. For more details on these options, run the generator and follow the wizard to get familiar.
 
-```
---type          # app or component
---dest          # Destination directory
---name          # Component or app name
---style         # Deprecated: es6, es6-functional or es5
---esnext        # Use ES6+ features
---modules       # Module format, case insensitive: ES6 or CommonJS
---state         # ES6 only: none, property or constructor
---router        # Enable React Router
---pure-render   # Enable pure render
---bootstrap     # Enable React Bootstrap
---enable        # Enable multiple flags ("a,b")
---disable       # Disable multiple flags
---append        # For apps: append a mountNode to body prior to rendering
---help  -h      # Print the generator's options and usage
---skip-cache    # Do not remember prompt answers
---skip-install  # Do not automatically install dependencies
-```
+- type: "app" or "component"
+- dest: relative destination directory (its segments will be [param-cased](https://github.com/blakeembrey/param-case))
+- name: component or app name
+- esnext (boolean): Use ES6+ features
+- modules: module format (ES6 only), case insensitive: "ES6" or "CommonJS"
+- state: Where to define initial state (ES6 only). Can be "none", "class" (class property: `state = ..`) or "constructor" (`this.state = ..`).
+- router, pure-render, bootstrap (boolean): add React Router, pure render and/or React Bootstrap, respectively. To disable a feature, specify `--no-router`.
+- enable, disable: Toggle multiple features, as an array or comma-separated string. More useful for subgenerators (see below) than in the CLI (`--router --bootstrap` is shorter than `--enable router,bootstrap`). But if it tickles your fancy, you can even do `--enable router --enable bootstrap`.
+- append (boolean): for apps only. If true, the generated code creates a mountNode (`div`) and appends it to body. Defaults to false, meaning it renders into `#container`.
+- style: "es5", "es6", or "es6-functional" (deprecated)
+- help/h: print options and usage
+- skipCache: do not remember prompt answers
+- skipInstall: do not automatically install dependencies
 
-Examples:
+### examples
 
 ```
 yo bare-react --no-esnext --type app --name Dashboard --dest lib
 yo bare-react --router --pure-render --no-bootstrap
-yo bare-react --esnext --modules CommonJS
+yo bare-react --esnext --modules CommonJS --state class
 ```
 
 ## install
@@ -87,6 +82,7 @@ this.composeWith('bare-react'
   , { options:  { type: 'component'
                 , dest: 'lib'
                 , name: 'PopupChild'
+                , enable: ['router', 'pureRender']
                 , skipInstall: this.options.skipInstall
                 , skipCache: this.options.skipCache }}
   , { local: require.resolve('generator-bare-react')
